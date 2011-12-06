@@ -22,7 +22,7 @@ class AdapterTestSqlserver < ActiveRecord::TestCase
     should 'not mangel complex order clauses' do
       xyz_order = "CASE WHEN [title] LIKE N'XYZ%' THEN 0 ELSE 1 END"
       xyz_post = Post.create :title => 'XYZ Post', :body => 'Test cased orders.'
-      assert_equal xyz_post, Post.order(Arel::Nodes::Ordering.new(Arel.sql(xyz_order))).first
+      assert_equal xyz_post, Post.order(xyz_order).first
     end
     
     should 'have a 128 max #table_alias_length' do

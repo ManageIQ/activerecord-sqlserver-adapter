@@ -40,10 +40,14 @@ module Arel
         when Arel::Nodes::Ordering
           x
         when String
-          x.split(',').map do |s|
-            e, d = s.split
-            e = Arel.sql(e)
-            d =~ /desc/i ? Arel::Nodes::Descending.new(e) : Arel::Nodes::Ascending.new(e)
+          if x =~ /\s*case/i
+            Arel::Nodes::Ordering.new(Arel.sql(x))
+          else
+            x.split(',').map do |s|
+              e, d = s.split
+              e = Arel.sql(e)
+              d =~ /desc/i ? Arel::Nodes::Descending.new(e) : Arel::Nodes::Ascending.new(e)
+            end
           end
         else
           e = Arel.sql(x.to_s)
