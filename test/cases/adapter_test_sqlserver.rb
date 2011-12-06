@@ -25,6 +25,14 @@ class AdapterTestSqlserver < ActiveRecord::TestCase
       assert_equal xyz_post, Post.order(xyz_order).first
     end
     
+    should 'not mangel multiple column ordering' do
+      order = "title DESC, body"
+      post1 = Post.create :title => 'ZZZ Post', :body => 'Test cased orders.'
+      post2 = Post.create :title => 'ZZZ Post', :body => 'ZZZ Test cased orders.'
+      assert_equal post1, Post.order(order).first
+      assert_equal post2, Post.order(order).second
+    end
+    
     should 'have a 128 max #table_alias_length' do
       assert @connection.table_alias_length <= 128
     end
