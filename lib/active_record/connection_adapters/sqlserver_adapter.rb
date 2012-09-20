@@ -303,7 +303,13 @@ module ActiveRecord
       end
       
       # === Abstract Adapter (Misc Support) =========================== #
-      
+
+      def set_pk_sequence!(table, value, pk = nil, sequence = nil)
+        current = select_value("SELECT IDENT_CURRENT('#{table}')").to_i
+        value = current == 0 ? (value + 1) : [value, current].max
+        do_execute "DBCC CHECKIDENT (#{table}, RESEED, #{value})"
+      end
+
       def pk_and_sequence_for(table_name)
         idcol = identity_column(table_name)
         idcol ? [idcol.name,nil] : nil
