@@ -355,6 +355,7 @@ module ActiveRecord
         end
         
         def raw_connection_do(sql)
+          check_for_connection_ttl
           case @connection_options[:mode]
           when :dblib
             @connection.execute(sql).do
@@ -381,6 +382,7 @@ module ActiveRecord
         end
         
         def raw_connection_run(sql)
+          check_for_connection_ttl
           with_sqlserver_error_handling do
             case @connection_options[:mode]
             when :dblib

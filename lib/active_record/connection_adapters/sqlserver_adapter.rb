@@ -201,6 +201,7 @@ module ActiveRecord
         # Our Responsibility
         @config = config
         @connection_options = config
+        @connection_options[:connection_ttl] ||= 0
         connect
         @database_version = select_value 'SELECT @@version', 'SCHEMA'
         @database_year = begin
@@ -466,10 +467,33 @@ module ActiveRecord
                         end
                       end
         @spid = _raw_select("SELECT @@SPID", :fetch => :rows).first.first
+        @connection_born_on = Time.now.utc
         configure_connection
       rescue
         raise unless @auto_connecting
       end
+      
+      def check_for_connection_ttl
+        if !@reconnect_after_ttl && connection_ttl_expired?
+          if self.open_transactions == 0
+            $log.info("MIQ(#{adapter_name}.check_for_connection_ttl) SPID: [#{@spid}] Reconnecting: ttl: [#{@connection_options[:connection_ttl]}], connection_born_on: [#{@connection_born_on}]")
+            begin
+              @reconnect_after_ttl = true
+              reconnect!
+            ensure
+              @reconnect_after_ttl = nil
+            end
+          else
+            $log.info("MIQ(#{adapter_name}.check_for_connection_ttl) SPID: [#{@spid}] Not reconnecting due to open transactions: open_transactions: [#{self.open_transactions}], ttl: [#{@connection_options[:connection_ttl]}], connection_born_on: [#{@connection_born_on}]")
+          end
+        end
+      end
+      
+      def connection_ttl_expired?
+        @connection_options[:connection_ttl] > 0 && @connection_born_on && (Time.now.utc > (@connection_born_on + @connection_options[:connection_ttl]))
+      end
+      
+
       
       # Override this method so every connection can be configured to your needs.
       # For example: 
