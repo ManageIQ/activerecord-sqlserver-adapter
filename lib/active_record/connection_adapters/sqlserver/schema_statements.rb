@@ -247,7 +247,7 @@ module ActiveRecord
             do_execute "ALTER TABLE #{quote_table_name(table_name)} DROP CONSTRAINT #{quote_column_name(constraint)}"
           end
         end
-
+        
         def remove_default_constraint(table_name, column_name)
           # If their are foreign keys in this table, we could still get back a 2D array, so flatten just in case.
           execute_procedure(:sp_helpconstraint, table_name, 'nomsg').flatten.select do |row|
@@ -256,7 +256,12 @@ module ActiveRecord
             do_execute "ALTER TABLE #{quote_table_name(table_name)} DROP CONSTRAINT #{row['constraint_name']}"
           end
         end
-
+        
+        def remove_pk_constraint(table_name)
+          constraint = pk_constraint_name(table_name)
+          do_execute "ALTER TABLE #{quote_table_name(table_name)} DROP CONSTRAINT #{constraint}" unless constraint.blank?
+        end
+        
         def remove_indexes(table_name, column_name)
           indexes(table_name).select{ |index| index.columns.include?(column_name.to_s) }.each do |index|
             remove_index(table_name, {:name => index.name})
@@ -277,6 +282,10 @@ module ActiveRecord
         
         def default_constraint_name(table_name, column_name)
           "DF_#{table_name}_#{column_name}"
+        end
+        
+        def pk_constraint_name(table_name)
+          select_value("SELECT name FROM sysobjects WHERE xtype = 'PK' AND parent_obj = OBJECT_ID('#{table_name}')")
         end
         
         def detect_column_for!(table_name, column_name)
