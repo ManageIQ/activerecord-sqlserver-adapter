@@ -127,7 +127,7 @@ module ActiveRecord
         
         def initialize_native_database_types
           {
-            :primary_key  => "int NOT NULL IDENTITY(1,1) PRIMARY KEY",
+            :primary_key  => "bigint NOT NULL IDENTITY(1, 1) PRIMARY KEY",
             :string       => { :name => native_string_database_type, :limit => 255  },
             :text         => { :name => native_text_database_type },
             :integer      => { :name => "int", :limit => 4 },
